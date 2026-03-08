@@ -2,6 +2,7 @@ import { mockCustomers } from '../data/mockCustomers';
 import { Customer, UpdateCustomerBody } from '../types/customer';
 
 const NETWORK_DELAY_MS = 250;
+const DEFAULT_PAGE_SIZE = 10;
 
 function fakePromise(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -20,18 +21,41 @@ function saveCustomer(updatedCustomer: Customer): Customer {
   return mockCustomers[customerIndex];
 }
 
-export async function fetchCustomers(): Promise<Customer[]> {
+type FetchCustomerQuery = {
+  offset?: number;
+  limit?: number;
+};
+
+export type FetchCustomersResult = {
+  customers: Customer[];
+  hasMore: boolean;
+  nextOffset: number;
+};
+
+export async function fetchCustomers(
+  query: FetchCustomerQuery = {},
+): Promise<FetchCustomersResult> {
   await fakePromise(NETWORK_DELAY_MS);
-  return mockCustomers;
+
+  const offset = query.offset ?? 0;
+  const limit = query.limit ?? DEFAULT_PAGE_SIZE;
+  const customers = mockCustomers.slice(offset, offset + limit);
+  const nextOffset = offset + customers.length;
+
+  return {
+    customers,
+    hasMore: nextOffset < mockCustomers.length,
+    nextOffset,
+  };
 }
 
 export async function updateCustomer(
-  input: UpdateCustomerBody,
+  body: UpdateCustomerBody,
 ): Promise<Customer> {
   await fakePromise(NETWORK_DELAY_MS);
 
   const existingCustomer = mockCustomers.find(
-    customer => customer.id === input.customerId,
+    customer => customer.id === body.customerId,
   );
 
   if (!existingCustomer) {
@@ -40,8 +64,8 @@ export async function updateCustomer(
 
   return saveCustomer({
     ...existingCustomer,
-    name: input.name,
-    email: input.email,
+    name: body.name,
+    email: body.email,
   });
 }
 

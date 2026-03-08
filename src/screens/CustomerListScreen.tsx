@@ -33,9 +33,12 @@ export function CustomerListScreen({ navigation }: Props) {
     customers,
     isLoading,
     isRefreshing,
+    isLoadingMore,
+    hasMoreCustomers,
     error,
     loadCustomers,
     refreshCustomers,
+    loadMoreCustomers,
   } = useCustomers();
   const [query, setQuery] = useState('');
 
@@ -84,6 +87,12 @@ export function CustomerListScreen({ navigation }: Props) {
     );
   };
 
+  const onEndReached = async () => {
+    await loadMoreCustomers();
+  };
+
+  const showInitialError = Boolean(error) && customers.length === 0;
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Customers</Text>
@@ -101,7 +110,7 @@ export function CustomerListScreen({ navigation }: Props) {
           <ActivityIndicator size="small" color={theme.colors.primary} />
           <Text style={styles.stateText}>Loading customers...</Text>
         </View>
-      ) : error ? (
+      ) : showInitialError ? (
         <View style={styles.centeredState}>
           <Text style={styles.errorText}>{error}</Text>
         </View>
@@ -115,6 +124,20 @@ export function CustomerListScreen({ navigation }: Props) {
           refreshControl={
             <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
           }
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.35}
+          ListFooterComponent={
+            isLoadingMore ? (
+              <View style={styles.footerLoading}>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+                <Text style={styles.stateText}>Loading more customers...</Text>
+              </View>
+            ) : !hasMoreCustomers && filteredCustomers.length > 0 ? (
+              <View style={styles.footerLoading}>
+                <Text style={styles.footerText}>No more customers</Text>
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View style={styles.centeredState}>
               <Text style={styles.stateText}>No customers found.</Text>
@@ -122,6 +145,9 @@ export function CustomerListScreen({ navigation }: Props) {
           }
         />
       )}
+      {!showInitialError && error ? (
+        <Text style={styles.inlineErrorText}>{error}</Text>
+      ) : null}
     </View>
   );
 }
@@ -168,5 +194,19 @@ const styles = StyleSheet.create({
   errorText: {
     color: theme.colors.danger,
     textAlign: 'center',
+  },
+  inlineErrorText: {
+    marginTop: theme.spacing.sm,
+    ...theme.typography.bodySmall,
+    color: theme.colors.danger,
+    textAlign: 'center',
+  },
+  footerLoading: {
+    paddingVertical: theme.spacing.md,
+    alignItems: 'center',
+  },
+  footerText: {
+    ...theme.typography.bodySmall,
+    color: theme.colors.textMuted,
   },
 });

@@ -8,14 +8,20 @@ import React, {
 } from 'react';
 import {
   fetchCustomers,
+  FetchCustomersResult,
   setCustomerStatus,
   updateCustomer,
 } from '../services/customerService';
 import { Customer, UpdateCustomerBody } from '../types/customer';
 
+const PAGE_SIZE = 10;
+
 type CustomersState = {
   customers: Customer[];
   isLoading: boolean;
+  isLoadingMore: boolean;
+  hasMoreCustomers: boolean;
+  nextOffset: number;
   isRefreshing: boolean;
   error: string | null;
   statusUpdatingCustomerId: string | null;
@@ -24,6 +30,7 @@ type CustomersState = {
 
 type CustomersContextValue = CustomersState & {
   loadCustomers: () => Promise<void>;
+  loadMoreCustomers: () => Promise<void>;
   refreshCustomers: () => Promise<void>;
   editCustomer: (body: UpdateCustomerBody) => Promise<void>;
   toggleCustomerStatus: (customerId: string) => Promise<void>;
@@ -31,8 +38,15 @@ type CustomersContextValue = CustomersState & {
 
 type CustomersAction =
   | { type: 'LOAD_START'; refresh: boolean }
-  | { type: 'LOAD_SUCCESS'; customers: Customer[] }
+  | {
+      type: 'LOAD_SUCCESS';
+      customers: Customer[];
+      hasMoreCustomers: boolean;
+      nextOffset: number;
+      append: boolean;
+    }
   | { type: 'LOAD_ERROR'; error: string }
+  | { type: 'LOAD_MORE_START' }
   | { type: 'CUSTOMER_UPDATED'; customer: Customer }
   | { type: 'STATUS_TOGGLE_START'; customerId: string }
   | { type: 'STATUS_TOGGLE_SUCCESS'; customer: Customer }
@@ -41,7 +55,10 @@ type CustomersAction =
 const initialState: CustomersState = {
   customers: [],
   isLoading: false,
+  isLoadingMore: false,
   isRefreshing: false,
+  hasMoreCustomers: true,
+  nextOffset: 0,
   error: null,
   statusUpdatingCustomerId: null,
   statusUpdateError: null,
@@ -56,23 +73,36 @@ function customersReducer(
       return {
         ...state,
         isLoading: !action.refresh,
+        isLoadingMore: false,
         isRefreshing: action.refresh,
         error: null,
       };
     case 'LOAD_SUCCESS':
       return {
         ...state,
-        customers: action.customers,
+        customers: action.append
+          ? [...state.customers, ...action.customers]
+          : action.customers,
         isLoading: false,
+        isLoadingMore: false,
         isRefreshing: false,
+        hasMoreCustomers: action.hasMoreCustomers,
+        nextOffset: action.nextOffset,
         error: null,
       };
     case 'LOAD_ERROR':
       return {
         ...state,
         isLoading: false,
+        isLoadingMore: false,
         isRefreshing: false,
         error: action.error,
+      };
+    case 'LOAD_MORE_START':
+      return {
+        ...state,
+        isLoadingMore: true,
+        error: null,
       };
     case 'CUSTOMER_UPDATED':
       return {
@@ -121,8 +151,8 @@ export function CustomersProvider({ children }: PropsWithChildren) {
     dispatch({ type: 'LOAD_START', refresh });
 
     try {
-      const customers = await fetchCustomers();
-      dispatch({ type: 'LOAD_SUCCESS', customers });
+      const result = await fetchCustomers({ offset: 0, limit: PAGE_SIZE });
+      dispatchLoadSuccess(dispatch, result, false);
     } catch {
       dispatch({
         type: 'LOAD_ERROR',
@@ -138,6 +168,38 @@ export function CustomersProvider({ children }: PropsWithChildren) {
   const refreshCustomers = useCallback(async () => {
     await runLoad(true);
   }, [runLoad]);
+
+  const loadMoreCustomers = useCallback(async () => {
+    if (
+      state.isLoading ||
+      state.isRefreshing ||
+      state.isLoadingMore ||
+      !state.hasMoreCustomers
+    ) {
+      return;
+    }
+
+    dispatch({ type: 'LOAD_MORE_START' });
+
+    try {
+      const result = await fetchCustomers({
+        offset: state.nextOffset,
+        limit: PAGE_SIZE,
+      });
+      dispatchLoadSuccess(dispatch, result, true);
+    } catch {
+      dispatch({
+        type: 'LOAD_ERROR',
+        error: 'Failed to load more customers. Please try again.',
+      });
+    }
+  }, [
+    state.hasMoreCustomers,
+    state.isLoading,
+    state.isLoadingMore,
+    state.isRefreshing,
+    state.nextOffset,
+  ]);
 
   const editCustomer = useCallback(async (body: UpdateCustomerBody) => {
     const updatedCustomer = await updateCustomer(body);
@@ -181,6 +243,7 @@ export function CustomersProvider({ children }: PropsWithChildren) {
       ...state,
       loadCustomers,
       refreshCustomers,
+      loadMoreCustomers,
       editCustomer,
       toggleCustomerStatus,
     }),
@@ -188,6 +251,7 @@ export function CustomersProvider({ children }: PropsWithChildren) {
       state,
       loadCustomers,
       refreshCustomers,
+      loadMoreCustomers,
       editCustomer,
       toggleCustomerStatus,
     ],
@@ -198,6 +262,20 @@ export function CustomersProvider({ children }: PropsWithChildren) {
       {children}
     </CustomersContext.Provider>
   );
+}
+
+function dispatchLoadSuccess(
+  dispatch: React.Dispatch<CustomersAction>,
+  result: FetchCustomersResult,
+  append: boolean,
+) {
+  dispatch({
+    type: 'LOAD_SUCCESS',
+    customers: result.customers,
+    hasMoreCustomers: result.hasMore,
+    nextOffset: result.nextOffset,
+    append,
+  });
 }
 
 export function useCustomers(): CustomersContextValue {

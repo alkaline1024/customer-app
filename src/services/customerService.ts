@@ -8,22 +8,10 @@ function fakePromise(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function saveCustomer(updatedCustomer: Customer): Customer {
-  const customerIndex = mockCustomers.findIndex(
-    customer => customer.id === updatedCustomer.id,
-  );
-
-  if (customerIndex < 0) {
-    throw new Error('Customer not found');
-  }
-
-  mockCustomers[customerIndex] = updatedCustomer;
-  return mockCustomers[customerIndex];
-}
-
 type FetchCustomerQuery = {
   offset?: number;
   limit?: number;
+  search?: string;
 };
 
 export type FetchCustomersResult = {
@@ -39,12 +27,28 @@ export async function fetchCustomers(
 
   const offset = query.offset ?? 0;
   const limit = query.limit ?? DEFAULT_PAGE_SIZE;
-  const customers = mockCustomers.slice(offset, offset + limit);
+  const search = query.search?.trim().toLowerCase();
+
+  let sourceCustomers = mockCustomers;
+
+  if (search) {
+    // MOCK: search is executed in-memory to simulate backend query filtering.
+    sourceCustomers = sourceCustomers.filter(customer => {
+      return (
+        customer.name.toLowerCase().includes(search) ||
+        customer.email.toLowerCase().includes(search)
+      );
+    });
+  }
+
+  // MOCK: pagination is executed in-memory to simulate backend paging.
+  const customers = sourceCustomers.slice(offset, offset + limit);
+
   const nextOffset = offset + customers.length;
 
   return {
     customers,
-    hasMore: nextOffset < mockCustomers.length,
+    hasMore: nextOffset < sourceCustomers.length,
     nextOffset,
   };
 }
@@ -62,7 +66,7 @@ export async function updateCustomer(
     throw new Error('Customer not found');
   }
 
-  return saveCustomer({
+  return saveCustomerInMemory({
     ...existingCustomer,
     name: body.name,
     email: body.email,
@@ -83,8 +87,23 @@ export async function setCustomerStatus(
     throw new Error('Customer not found');
   }
 
-  return saveCustomer({
+  return saveCustomerInMemory({
     ...existingCustomer,
     status,
   });
+}
+
+// MOCK: Saving the updated customer in-memory.
+
+function saveCustomerInMemory(updatedCustomer: Customer): Customer {
+  const customerIndex = mockCustomers.findIndex(
+    customer => customer.id === updatedCustomer.id,
+  );
+
+  if (customerIndex < 0) {
+    throw new Error('Customer not found');
+  }
+
+  mockCustomers[customerIndex] = updatedCustomer;
+  return mockCustomers[customerIndex];
 }

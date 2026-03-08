@@ -24,6 +24,9 @@ type CustomersState = {
   nextOffset: number;
   isRefreshing: boolean;
   error: string | null;
+  searchQuery: string;
+  isSearching: boolean;
+  searchError: string | null;
   statusUpdatingCustomerId: string | null;
   statusUpdateError: string | null;
 };
@@ -32,6 +35,7 @@ type CustomersContextValue = CustomersState & {
   loadCustomers: () => Promise<void>;
   loadMoreCustomers: () => Promise<void>;
   refreshCustomers: () => Promise<void>;
+  searchCustomers: (query: string) => Promise<void>;
   editCustomer: (body: UpdateCustomerBody) => Promise<void>;
   toggleCustomerStatus: (customerId: string) => Promise<void>;
 };
@@ -47,6 +51,15 @@ type CustomersAction =
     }
   | { type: 'LOAD_ERROR'; error: string }
   | { type: 'LOAD_MORE_START' }
+  | { type: 'SEARCH_START'; query: string }
+  | {
+      type: 'SEARCH_SUCCESS';
+      customers: Customer[];
+      hasMoreCustomers: boolean;
+      nextOffset: number;
+    }
+  | { type: 'SEARCH_ERROR'; error: string }
+  | { type: 'SEARCH_CLEAR' }
   | { type: 'CUSTOMER_UPDATED'; customer: Customer }
   | { type: 'STATUS_TOGGLE_START'; customerId: string }
   | { type: 'STATUS_TOGGLE_SUCCESS'; customer: Customer }
@@ -60,6 +73,9 @@ const initialState: CustomersState = {
   hasMoreCustomers: true,
   nextOffset: 0,
   error: null,
+  searchQuery: '',
+  isSearching: false,
+  searchError: null,
   statusUpdatingCustomerId: null,
   statusUpdateError: null,
 };
@@ -104,6 +120,35 @@ function customersReducer(
         isLoadingMore: true,
         error: null,
       };
+    case 'SEARCH_START':
+      return {
+        ...state,
+        searchQuery: action.query,
+        isSearching: true,
+        searchError: null,
+      };
+    case 'SEARCH_SUCCESS':
+      return {
+        ...state,
+        customers: action.customers,
+        hasMoreCustomers: action.hasMoreCustomers,
+        nextOffset: action.nextOffset,
+        isSearching: false,
+        searchError: null,
+      };
+    case 'SEARCH_ERROR':
+      return {
+        ...state,
+        isSearching: false,
+        searchError: action.error,
+      };
+    case 'SEARCH_CLEAR':
+      return {
+        ...state,
+        searchQuery: '',
+        isSearching: false,
+        searchError: null,
+      };
     case 'CUSTOMER_UPDATED':
       return {
         ...state,
@@ -147,11 +192,15 @@ const CustomersContext = createContext<CustomersContextValue | undefined>(
 export function CustomersProvider({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(customersReducer, initialState);
 
-  const runLoad = useCallback(async (refresh: boolean) => {
+  const runLoad = useCallback(async (refresh: boolean, search: string = '') => {
     dispatch({ type: 'LOAD_START', refresh });
 
     try {
-      const result = await fetchCustomers({ offset: 0, limit: PAGE_SIZE });
+      const result = await fetchCustomers({
+        offset: 0,
+        limit: PAGE_SIZE,
+        search: search || undefined,
+      });
       dispatchLoadSuccess(dispatch, result, false);
     } catch {
       dispatch({
@@ -162,12 +211,12 @@ export function CustomersProvider({ children }: PropsWithChildren) {
   }, []);
 
   const loadCustomers = useCallback(async () => {
-    await runLoad(false);
+    await runLoad(false, '');
   }, [runLoad]);
 
   const refreshCustomers = useCallback(async () => {
-    await runLoad(true);
-  }, [runLoad]);
+    await runLoad(true, state.searchQuery);
+  }, [runLoad, state.searchQuery]);
 
   const loadMoreCustomers = useCallback(async () => {
     if (
@@ -185,6 +234,7 @@ export function CustomersProvider({ children }: PropsWithChildren) {
       const result = await fetchCustomers({
         offset: state.nextOffset,
         limit: PAGE_SIZE,
+        search: state.searchQuery || undefined,
       });
       dispatchLoadSuccess(dispatch, result, true);
     } catch {
@@ -199,7 +249,42 @@ export function CustomersProvider({ children }: PropsWithChildren) {
     state.isLoadingMore,
     state.isRefreshing,
     state.nextOffset,
+    state.searchQuery,
   ]);
+
+  const searchCustomers = useCallback(
+    async (query: string) => {
+      const normalizedQuery = query.trim();
+
+      if (!normalizedQuery) {
+        dispatch({ type: 'SEARCH_CLEAR' });
+        await runLoad(false, '');
+        return;
+      }
+
+      dispatch({ type: 'SEARCH_START', query: normalizedQuery });
+
+      try {
+        const result = await fetchCustomers({
+          offset: 0,
+          limit: PAGE_SIZE,
+          search: normalizedQuery,
+        });
+        dispatch({
+          type: 'SEARCH_SUCCESS',
+          customers: result.customers,
+          hasMoreCustomers: result.hasMore,
+          nextOffset: result.nextOffset,
+        });
+      } catch {
+        dispatch({
+          type: 'SEARCH_ERROR',
+          error: 'Failed to search customers. Please try again.',
+        });
+      }
+    },
+    [runLoad],
+  );
 
   const editCustomer = useCallback(async (body: UpdateCustomerBody) => {
     const updatedCustomer = await updateCustomer(body);
@@ -244,6 +329,7 @@ export function CustomersProvider({ children }: PropsWithChildren) {
       loadCustomers,
       refreshCustomers,
       loadMoreCustomers,
+      searchCustomers,
       editCustomer,
       toggleCustomerStatus,
     }),
@@ -252,6 +338,7 @@ export function CustomersProvider({ children }: PropsWithChildren) {
       loadCustomers,
       refreshCustomers,
       loadMoreCustomers,
+      searchCustomers,
       editCustomer,
       toggleCustomerStatus,
     ],

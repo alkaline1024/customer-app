@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -20,6 +20,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CustomerList'>;
 
 const MIN_REFRESH_MS = 800;
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 function ListSeparator() {
   return <View style={styles.separator} />;
 }
@@ -35,10 +37,13 @@ export function CustomerListScreen({ navigation }: Props) {
     isRefreshing,
     isLoadingMore,
     hasMoreCustomers,
+    isSearching,
+    searchError,
     error,
     loadCustomers,
     refreshCustomers,
     loadMoreCustomers,
+    searchCustomers,
   } = useCustomers();
   const [query, setQuery] = useState('');
 
@@ -48,20 +53,18 @@ export function CustomerListScreen({ navigation }: Props) {
     }
   }, [customers.length, loadCustomers]);
 
-  const filteredCustomers = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchCustomers(query);
+    }, SEARCH_DEBOUNCE_MS);
 
-    if (!normalizedQuery) {
-      return customers;
-    }
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [query, searchCustomers]);
 
-    return customers.filter(customer => {
-      return (
-        customer.name.toLowerCase().includes(normalizedQuery) ||
-        customer.email.toLowerCase().includes(normalizedQuery)
-      );
-    });
-  }, [customers, query]);
+  const isSearchMode = query.trim().length > 0;
+  const displayedCustomers = customers;
 
   const onRefresh = async () => {
     const startedAt = Date.now();
@@ -105,7 +108,7 @@ export function CustomerListScreen({ navigation }: Props) {
         autoCapitalize="none"
       />
 
-      {isLoading ? (
+      {isLoading || isSearching ? (
         <View style={styles.centeredState}>
           <ActivityIndicator size="small" color={theme.colors.primary} />
           <Text style={styles.stateText}>Loading customers...</Text>
@@ -116,7 +119,7 @@ export function CustomerListScreen({ navigation }: Props) {
         </View>
       ) : (
         <FlatList
-          data={filteredCustomers}
+          data={displayedCustomers}
           keyExtractor={item => item.id}
           renderItem={renderCustomer}
           contentContainerStyle={styles.listContent}
@@ -127,14 +130,21 @@ export function CustomerListScreen({ navigation }: Props) {
           onEndReached={onEndReached}
           onEndReachedThreshold={0.35}
           ListFooterComponent={
-            isLoadingMore ? (
+            isSearching ? (
+              <View style={styles.footerLoading}>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+                <Text style={styles.stateText}>Searching customers...</Text>
+              </View>
+            ) : isLoadingMore ? (
               <View style={styles.footerLoading}>
                 <ActivityIndicator size="small" color={theme.colors.primary} />
                 <Text style={styles.stateText}>Loading more customers...</Text>
               </View>
-            ) : !hasMoreCustomers && filteredCustomers.length > 0 ? (
+            ) : !hasMoreCustomers && displayedCustomers.length > 0 ? (
               <View style={styles.footerLoading}>
-                <Text style={styles.footerText}>No more customers</Text>
+                <Text style={styles.footerText}>
+                  {isSearchMode ? 'No more results' : 'No more customers'}
+                </Text>
               </View>
             ) : null
           }
@@ -147,6 +157,9 @@ export function CustomerListScreen({ navigation }: Props) {
       )}
       {!showInitialError && error ? (
         <Text style={styles.inlineErrorText}>{error}</Text>
+      ) : null}
+      {searchError ? (
+        <Text style={styles.inlineErrorText}>{searchError}</Text>
       ) : null}
     </View>
   );

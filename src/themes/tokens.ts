@@ -3,6 +3,7 @@ import { TextStyle } from 'react-native';
 export const baseTokens = {
   colors: {
     background: '#F8FAFC',
+    backgroundMuted: '#E2E8F0',
     surface: '#FFFFFF',
     borderSubtle: '#E2E8F0',
     borderDefault: '#CBD5E1',

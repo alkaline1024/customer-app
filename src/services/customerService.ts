@@ -1,7 +1,7 @@
 import { mockCustomers } from '../data/mockCustomers';
 import { Customer, UpdateCustomerBody } from '../types/customer';
 
-const NETWORK_DELAY_MS = 250;
+const NETWORK_DELAY_MS = 1000;
 const DEFAULT_PAGE_SIZE = 10;
 
 function fakePromise(ms: number): Promise<void> {

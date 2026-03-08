@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   ListRenderItem,
   RefreshControl,
@@ -11,6 +10,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomerListItem } from '../components/CustomerListItem';
+import { CustomerListSkeleton } from '../components/CustomerListSkeleton';
 import { useCustomers } from '../context/CustomersContext';
 import { Customer } from '../types/customer';
 import { RootStackParamList } from '../navigation/types';
@@ -109,9 +109,8 @@ export function CustomerListScreen({ navigation }: Props) {
       />
 
       {isLoading || isSearching ? (
-        <View style={styles.centeredState}>
-          <ActivityIndicator size="small" color={theme.colors.primary} />
-          <Text style={styles.stateText}>Loading customers...</Text>
+        <View style={styles.skeletonContainer}>
+          <CustomerListSkeleton count={5} />
         </View>
       ) : showInitialError ? (
         <View style={styles.centeredState}>
@@ -132,16 +131,14 @@ export function CustomerListScreen({ navigation }: Props) {
           ListFooterComponent={
             isSearching ? (
               <View style={styles.footerLoading}>
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-                <Text style={styles.stateText}>Searching customers...</Text>
+                <CustomerListSkeleton count={1} compact />
               </View>
             ) : isLoadingMore ? (
               <View style={styles.footerLoading}>
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-                <Text style={styles.stateText}>Loading more customers...</Text>
+                <CustomerListSkeleton count={1} compact />
               </View>
             ) : !hasMoreCustomers && displayedCustomers.length > 0 ? (
-              <View style={styles.footerLoading}>
+              <View style={[styles.footerLoading, styles.centeredState]}>
                 <Text style={styles.footerText}>
                   {isSearchMode ? 'No more results' : 'No more customers'}
                 </Text>
@@ -199,6 +196,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingBottom: 60,
   },
+  skeletonContainer: {
+    paddingBottom: theme.spacing.xl,
+  },
   stateText: {
     marginTop: theme.spacing.sm,
     ...theme.typography.bodySmall,
@@ -216,7 +216,6 @@ const styles = StyleSheet.create({
   },
   footerLoading: {
     paddingVertical: theme.spacing.md,
-    alignItems: 'center',
   },
   footerText: {
     ...theme.typography.bodySmall,

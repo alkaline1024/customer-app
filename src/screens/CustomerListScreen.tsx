@@ -65,6 +65,7 @@ export function CustomerListScreen({ navigation }: Props) {
     await refreshCustomers();
     const elapsed = Date.now() - startedAt;
 
+    // Ensure the refresh indicator is visible for at least MIN_REFRESH_MS milliseconds
     if (elapsed < MIN_REFRESH_MS) {
       await wait(MIN_REFRESH_MS - elapsed);
     }

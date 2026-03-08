@@ -9,3 +9,9 @@ export type Customer = {
   status: CustomerStatus;
   createdAt: string;
 };
+
+export type UpdateCustomerBody = {
+  customerId: string;
+  name: string;
+  email: string;
+};

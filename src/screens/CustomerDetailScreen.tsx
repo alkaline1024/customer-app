@@ -32,7 +32,7 @@ export function CustomerDetailScreen({ navigation, route }: Props) {
       <Text style={styles.meta}>{customer.email}</Text>
       <Text style={styles.meta}>{customer.phone}</Text>
       <Text style={styles.meta}>Company: {customer.company}</Text>
-      <Text style={styles.meta}>Status: {customer.status}</Text>
+      <Text style={styles.meta}>Status: {customer.status.toUpperCase()}</Text>
 
       <Pressable
         style={[styles.button, styles.primaryButton]}
@@ -88,6 +88,14 @@ const styles = StyleSheet.create({
   buttonText: {
     ...theme.typography.button,
     color: theme.colors.textInverse,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  statusErrorText: {
+    marginTop: theme.spacing.sm,
+    color: theme.colors.danger,
+    ...theme.typography.bodySmall,
   },
   errorText: {
     color: theme.colors.danger,

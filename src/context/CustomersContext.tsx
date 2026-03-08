@@ -6,8 +6,8 @@ import React, {
   useMemo,
   useReducer,
 } from 'react';
-import { fetchCustomers } from '../services/customerService';
-import { Customer } from '../types/customer';
+import { fetchCustomers, updateCustomer } from '../services/customerService';
+import { Customer, UpdateCustomerBody } from '../types/customer';
 
 type CustomersState = {
   customers: Customer[];
@@ -19,12 +19,14 @@ type CustomersState = {
 type CustomersContextValue = CustomersState & {
   loadCustomers: () => Promise<void>;
   refreshCustomers: () => Promise<void>;
+  editCustomer: (body: UpdateCustomerBody) => Promise<void>;
 };
 
 type CustomersAction =
   | { type: 'LOAD_START'; refresh: boolean }
   | { type: 'LOAD_SUCCESS'; customers: Customer[] }
-  | { type: 'LOAD_ERROR'; error: string };
+  | { type: 'LOAD_ERROR'; error: string }
+  | { type: 'CUSTOMER_UPDATED'; customer: Customer };
 
 const initialState: CustomersState = {
   customers: [],
@@ -94,17 +96,23 @@ export function CustomersProvider({ children }: PropsWithChildren) {
     await runLoad(true);
   }, [runLoad]);
 
-  const value = useMemo(
+  const editCustomer = useCallback(async (body: UpdateCustomerBody) => {
+    const updatedCustomer = await updateCustomer(body);
+    dispatch({ type: 'CUSTOMER_UPDATED', customer: updatedCustomer });
+  }, []);
+
+  const providerValue = useMemo(
     () => ({
       ...state,
       loadCustomers,
       refreshCustomers,
+      editCustomer,
     }),
-    [state, loadCustomers, refreshCustomers],
+    [state, loadCustomers, refreshCustomers, editCustomer],
   );
 
   return (
-    <CustomersContext.Provider value={value}>
+    <CustomersContext.Provider value={providerValue}>
       {children}
     </CustomersContext.Provider>
   );

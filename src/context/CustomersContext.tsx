@@ -192,31 +192,40 @@ const CustomersContext = createContext<CustomersContextValue | undefined>(
 export function CustomersProvider({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(customersReducer, initialState);
 
-  const runLoad = useCallback(async (refresh: boolean, search: string = '') => {
-    dispatch({ type: 'LOAD_START', refresh });
+  const loadFirstPage = useCallback(
+    async (
+      props: {
+        refresh?: boolean;
+        search?: string;
+      } = {},
+    ) => {
+      const { refresh = false, search = undefined } = props;
 
-    try {
-      const result = await fetchCustomers({
-        offset: 0,
-        limit: PAGE_SIZE,
-        search: search || undefined,
-      });
-      dispatchLoadSuccess(dispatch, result, false);
-    } catch {
-      dispatch({
-        type: 'LOAD_ERROR',
-        error: 'Failed to load customers. Please try again.',
-      });
-    }
-  }, []);
+      dispatch({ type: 'LOAD_START', refresh });
+      try {
+        const result = await fetchCustomers({
+          offset: 0,
+          limit: PAGE_SIZE,
+          search: search || undefined,
+        });
+        dispatchLoadSuccess(dispatch, result, false);
+      } catch {
+        dispatch({
+          type: 'LOAD_ERROR',
+          error: 'Failed to load customers. Please try again.',
+        });
+      }
+    },
+    [],
+  );
 
   const loadCustomers = useCallback(async () => {
-    await runLoad(false, '');
-  }, [runLoad]);
+    await loadFirstPage();
+  }, [loadFirstPage]);
 
   const refreshCustomers = useCallback(async () => {
-    await runLoad(true, state.searchQuery);
-  }, [runLoad, state.searchQuery]);
+    await loadFirstPage({ refresh: true, search: state.searchQuery });
+  }, [loadFirstPage, state.searchQuery]);
 
   const loadMoreCustomers = useCallback(async () => {
     if (
@@ -258,7 +267,7 @@ export function CustomersProvider({ children }: PropsWithChildren) {
 
       if (!normalizedQuery) {
         dispatch({ type: 'SEARCH_CLEAR' });
-        await runLoad(false, '');
+        await loadFirstPage();
         return;
       }
 
@@ -283,7 +292,7 @@ export function CustomersProvider({ children }: PropsWithChildren) {
         });
       }
     },
-    [runLoad],
+    [loadFirstPage],
   );
 
   const editCustomer = useCallback(async (body: UpdateCustomerBody) => {

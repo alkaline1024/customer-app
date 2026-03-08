@@ -23,6 +23,7 @@ export function useCustomersActions(
   state: CustomersState,
   dispatch: Dispatch<CustomersAction>,
 ): CustomersActions {
+  // Shared loader for first page (initial load, refresh, and reset search).
   const loadFirstPage = useCallback(
     async (
       props: {
@@ -59,6 +60,7 @@ export function useCustomersActions(
   }, [loadFirstPage, state.searchQuery]);
 
   const loadMoreCustomers = useCallback(async () => {
+    // Prevent duplicate or invalid load-more calls.
     if (
       state.isLoading ||
       state.isRefreshing ||
@@ -98,6 +100,7 @@ export function useCustomersActions(
       const normalizedQuery = query.trim();
 
       if (!normalizedQuery) {
+        // Empty query returns to default first page data.
         dispatch({ type: 'SEARCH_CLEAR' });
         await loadFirstPage();
         return;
@@ -155,6 +158,7 @@ export function useCustomersActions(
         targetCustomer.status === 'active' ? 'inactive' : 'active';
 
       try {
+        // Persist status change via mock service, then sync reducer state.
         const updatedCustomer = await setCustomerStatus(customerId, nextStatus);
         dispatch({ type: 'STATUS_TOGGLE_SUCCESS', customer: updatedCustomer });
       } catch {

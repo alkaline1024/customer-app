@@ -1,97 +1,163 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Customer App (React Native)
 
-# Getting Started
+[TH](#-thai) | [EN](#-english)
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## Thai
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+โปรเจกต์นี้เป็น take-home assignment สำหรับจัดการข้อมูลลูกค้าแบบง่ายๆ
+มี flow หลักคือ list, search, pagination, ดูรายละเอียด, แก้ไขข้อมูล, และ activate/deactivate
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### วิธีรันโปรเจกต์
+
+1. ติดตั้งแพ็กเกจ
 
 ```sh
-# Using npm
+npm install
+```
+
+2. เปิด Metro
+
+```sh
 npm start
-
-# OR using Yarn
-yarn start
 ```
 
-## Step 2: Build and run your app
+3. รันแอป
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
+Android:
 
 ```sh
-# Using npm
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+iOS:
 
 ```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+4. รันเทสต์
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+```sh
+npm test
+```
 
-## Step 3: Modify your app
+### โครงสร้างโปรเจกต์
 
-Now that you have successfully run the app, let's make changes!
+- `src/screens/` หน้าจอหลัก เช่น list/detail/edit
+- `src/components/` UI component ย่อย เช่น `CustomerListItem`, `CustomerListSkeleton`
+- `src/context/CustomersContext.tsx` context provider และ hook (`useCustomers`)
+- `src/context/customersStore.ts` state/reducer/action types ของลูกค้า
+- `src/context/useCustomersActions.ts` async actions เช่น load/search/loadMore/edit/toggle
+- `src/services/customerService.ts` mock API (fetch/search/pagination/update/status)
+- `src/data/mockCustomers.ts` ข้อมูล mock
+- `src/themes/` design tokens และ theme กลาง
+- `__tests__/` unit tests
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+### การตัดสินใจทางเทคนิคที่สำคัญ
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+- ใช้ `Context + useReducer` เพื่อให้ state flow ชัดและอธิบายง่าย
+- ใช้ mock service แยกจาก UI เพื่อจำลอง async จริง (loading/error)
+- ใช้ API เดียว (`fetchCustomers`) รองรับทั้ง `search` และ `pagination`
+- search มี debounce และโหลดต่อ (load more) ได้ในโหมดค้นหา
+- ใช้ design tokens รวมศูนย์ใน `src/themes` เพื่อคุม style ง่าย
+- ฟอร์มแก้ไขลูกค้าใช้ `react-hook-form + zod` เพื่อให้ validation อ่านง่าย
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+### ข้อสมมติและ trade-offs
 
-## Congratulations! :tada:
+- ตอนนี้ข้อมูลเป็น in-memory mock เท่านั้น (ยังไม่ต่อ backend จริง)
+- `customerService` จำลอง network delay เพื่อให้เห็น loading state
+- เน้นโค้ดอ่านง่ายก่อน optimization เชิงลึก
+- ยังไม่ได้แยก error state ละเอียดทุก action เป็นรายจุด
 
-You've successfully run and modified your React Native App. :partying_face:
+### ถ้ามีเวลาเพิ่ม จะพัฒนาอะไรต่อ
 
-### Now what?
+- เพิ่ม request cancel/guard ให้ครบทุก async action
+- แยก error state ต่อ action ให้ละเอียดขึ้น (load/search/edit/toggle)
+- เพิ่ม empty states และ retry UX ให้ครบทุกกรณี
+- เชื่อม backend จริง และจัดการ caching
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+### หมายเหตุ
 
-# Troubleshooting
+- โปรเจกต์นี้เน้นทำให้เข้าใจง่าย อธิบายง่าย ตามแนว take-home 4-6 ชั่วโมง
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+---
 
-# Learn More
+## English
 
-To learn more about React Native, take a look at the following resources:
+This project is a simple take-home assignment for customer management.
+Main flows are list, search, pagination, detail, edit, and activate/deactivate.
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+### How to run the project
+
+1. Install dependencies
+
+```sh
+npm install
+```
+
+2. Start Metro
+
+```sh
+npm start
+```
+
+3. Run the app
+
+Android:
+
+```sh
+npm run android
+```
+
+iOS:
+
+```sh
+npm run ios
+```
+
+4. Run tests
+
+```sh
+npm test
+```
+
+### Project structure overview
+
+- `src/screens/` main screens like list/detail/edit
+- `src/components/` reusable UI components such as `CustomerListItem`, `CustomerListSkeleton`
+- `src/context/CustomersContext.tsx` context provider and `useCustomers` hook
+- `src/context/customersStore.ts` customer state/reducer/action types
+- `src/context/useCustomersActions.ts` async actions (load/search/loadMore/edit/toggle)
+- `src/services/customerService.ts` mock API (fetch/search/pagination/update/status)
+- `src/data/mockCustomers.ts` mock data source
+- `src/themes/` design tokens and shared theme
+- `__tests__/` unit tests
+
+### Key technical decisions
+
+- Use `Context + useReducer` for clear, interview-friendly state flow
+- Keep async logic in mock service and state layer, not in UI
+- Use one API (`fetchCustomers`) for both search and pagination
+- Add debounced search and load-more pagination for search mode
+- Use centralized design tokens from `src/themes`
+- Use `react-hook-form + zod` for readable and predictable form validation
+
+### Assumptions and trade-offs
+
+- Data is in-memory mock only (no real backend yet)
+- `customerService` simulates network delay for loading/error states
+- Prioritized readability over deep optimization
+- Error states are not fully separated by every action yet
+
+### What I would improve with more time
+
+- Add request cancellation/guard for all async actions
+- Separate error states more clearly per action (load/search/edit/toggle)
+- Improve empty/error/retry UX for each case
+- Connect to real backend and add caching strategy
+
+### Note
+
+- This project is intentionally kept simple and easy to explain for a 4-6 hour take-home scope.

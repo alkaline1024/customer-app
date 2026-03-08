@@ -1,5 +1,11 @@
 import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCustomers } from '../context/CustomersContext';
 import { RootStackParamList } from '../navigation/types';
@@ -9,7 +15,12 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CustomerDetail'>;
 
 export function CustomerDetailScreen({ navigation, route }: Props) {
   const { customerId } = route.params;
-  const { customers } = useCustomers();
+  const {
+    customers,
+    toggleCustomerStatus,
+    statusUpdatingCustomerId,
+    statusUpdateError,
+  } = useCustomers();
 
   const customer = useMemo(() => {
     return customers.find(item => item.id === customerId);
@@ -25,6 +36,7 @@ export function CustomerDetailScreen({ navigation, route }: Props) {
 
   const nextActionLabel =
     customer.status === 'active' ? 'Deactivate' : 'Activate';
+  const isStatusUpdating = statusUpdatingCustomerId === customer.id;
 
   return (
     <View style={styles.container}>
@@ -35,13 +47,26 @@ export function CustomerDetailScreen({ navigation, route }: Props) {
       <Text style={styles.meta}>Status: {customer.status.toUpperCase()}</Text>
 
       <Pressable
-        style={[styles.button, styles.primaryButton]}
+        style={[
+          styles.button,
+          styles.primaryButton,
+          isStatusUpdating && styles.buttonDisabled,
+        ]}
         onPress={() => {
-          // TODO: toggle customer
+          void toggleCustomerStatus(customer.id);
         }}
+        disabled={isStatusUpdating}
       >
-        <Text style={styles.buttonText}>{nextActionLabel}</Text>
+        {isStatusUpdating ? (
+          <ActivityIndicator size="small" color={theme.colors.textInverse} />
+        ) : (
+          <Text style={styles.buttonText}>{nextActionLabel}</Text>
+        )}
       </Pressable>
+
+      {statusUpdateError ? (
+        <Text style={styles.statusErrorText}>{statusUpdateError}</Text>
+      ) : null}
 
       <Pressable
         style={[styles.button, styles.secondaryButton]}

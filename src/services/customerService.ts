@@ -44,3 +44,23 @@ export async function updateCustomer(
     email: input.email,
   });
 }
+
+export async function setCustomerStatus(
+  customerId: string,
+  status: Customer['status'],
+): Promise<Customer> {
+  await fakePromise(NETWORK_DELAY_MS);
+
+  const existingCustomer = mockCustomers.find(
+    customer => customer.id === customerId,
+  );
+
+  if (!existingCustomer) {
+    throw new Error('Customer not found');
+  }
+
+  return saveCustomer({
+    ...existingCustomer,
+    status,
+  });
+}

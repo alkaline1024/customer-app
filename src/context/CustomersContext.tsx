@@ -6,7 +6,11 @@ import React, {
   useMemo,
   useReducer,
 } from 'react';
-import { fetchCustomers, updateCustomer } from '../services/customerService';
+import {
+  fetchCustomers,
+  setCustomerStatus,
+  updateCustomer,
+} from '../services/customerService';
 import { Customer, UpdateCustomerBody } from '../types/customer';
 
 type CustomersState = {
@@ -14,25 +18,33 @@ type CustomersState = {
   isLoading: boolean;
   isRefreshing: boolean;
   error: string | null;
+  statusUpdatingCustomerId: string | null;
+  statusUpdateError: string | null;
 };
 
 type CustomersContextValue = CustomersState & {
   loadCustomers: () => Promise<void>;
   refreshCustomers: () => Promise<void>;
   editCustomer: (body: UpdateCustomerBody) => Promise<void>;
+  toggleCustomerStatus: (customerId: string) => Promise<void>;
 };
 
 type CustomersAction =
   | { type: 'LOAD_START'; refresh: boolean }
   | { type: 'LOAD_SUCCESS'; customers: Customer[] }
   | { type: 'LOAD_ERROR'; error: string }
-  | { type: 'CUSTOMER_UPDATED'; customer: Customer };
+  | { type: 'CUSTOMER_UPDATED'; customer: Customer }
+  | { type: 'STATUS_TOGGLE_START'; customerId: string }
+  | { type: 'STATUS_TOGGLE_SUCCESS'; customer: Customer }
+  | { type: 'STATUS_TOGGLE_ERROR'; error: string };
 
 const initialState: CustomersState = {
   customers: [],
   isLoading: false,
   isRefreshing: false,
   error: null,
+  statusUpdatingCustomerId: null,
+  statusUpdateError: null,
 };
 
 function customersReducer(
@@ -61,6 +73,37 @@ function customersReducer(
         isLoading: false,
         isRefreshing: false,
         error: action.error,
+      };
+    case 'CUSTOMER_UPDATED':
+      return {
+        ...state,
+        customers: state.customers.map(
+          customer =>
+            customer.id === action.customer.id ? action.customer : customer, // Update the customer in the list
+        ),
+        error: null,
+      };
+    case 'STATUS_TOGGLE_START':
+      return {
+        ...state,
+        statusUpdatingCustomerId: action.customerId,
+        statusUpdateError: null,
+      };
+    case 'STATUS_TOGGLE_SUCCESS':
+      return {
+        ...state,
+        customers: state.customers.map(
+          customer =>
+            customer.id === action.customer.id ? action.customer : customer, // Update the customer in the list
+        ),
+        statusUpdatingCustomerId: null,
+        statusUpdateError: null,
+      };
+    case 'STATUS_TOGGLE_ERROR':
+      return {
+        ...state,
+        statusUpdatingCustomerId: null,
+        statusUpdateError: action.error,
       };
     default:
       return state;
@@ -101,18 +144,57 @@ export function CustomersProvider({ children }: PropsWithChildren) {
     dispatch({ type: 'CUSTOMER_UPDATED', customer: updatedCustomer });
   }, []);
 
-  const providerValue = useMemo(
+  const toggleCustomerStatus = useCallback(
+    async (customerId: string) => {
+      dispatch({ type: 'STATUS_TOGGLE_START', customerId });
+
+      const targetCustomer = state.customers.find(
+        customer => customer.id === customerId,
+      );
+
+      if (!targetCustomer) {
+        dispatch({
+          type: 'STATUS_TOGGLE_ERROR',
+          error: 'Customer not found.',
+        });
+        return;
+      }
+
+      const nextStatus =
+        targetCustomer.status === 'active' ? 'inactive' : 'active';
+
+      try {
+        const updatedCustomer = await setCustomerStatus(customerId, nextStatus);
+        dispatch({ type: 'STATUS_TOGGLE_SUCCESS', customer: updatedCustomer });
+      } catch {
+        dispatch({
+          type: 'STATUS_TOGGLE_ERROR',
+          error: 'Unable to update customer status. Please try again.',
+        });
+      }
+    },
+    [state.customers],
+  );
+
+  const provider = useMemo(
     () => ({
       ...state,
       loadCustomers,
       refreshCustomers,
       editCustomer,
+      toggleCustomerStatus,
     }),
-    [state, loadCustomers, refreshCustomers, editCustomer],
+    [
+      state,
+      loadCustomers,
+      refreshCustomers,
+      editCustomer,
+      toggleCustomerStatus,
+    ],
   );
 
   return (
-    <CustomersContext.Provider value={providerValue}>
+    <CustomersContext.Provider value={provider}>
       {children}
     </CustomersContext.Provider>
   );

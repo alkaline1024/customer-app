@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { CustomerStatusBadge } from '../components/CustomerStatusBadge';
 import { useCustomers } from '../context/CustomersContext';
 import { RootStackParamList } from '../navigation/types';
 import { theme } from '../themes';
@@ -44,7 +45,11 @@ export function CustomerDetailScreen({ navigation, route }: Props) {
       <Text style={styles.meta}>{customer.email}</Text>
       <Text style={styles.meta}>{customer.phone}</Text>
       <Text style={styles.meta}>Company: {customer.company}</Text>
-      <Text style={styles.meta}>Status: {customer.status.toUpperCase()}</Text>
+      <Text style={styles.meta}>Status</Text>
+      <CustomerStatusBadge
+        status={customer.status}
+        style={styles.statusBadge}
+      />
 
       <Pressable
         style={[
@@ -96,6 +101,9 @@ const styles = StyleSheet.create({
   meta: {
     ...theme.typography.body,
     color: theme.colors.textSecondary,
+    marginBottom: 6,
+  },
+  statusBadge: {
     marginBottom: 6,
   },
   button: {

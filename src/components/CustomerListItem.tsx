@@ -4,11 +4,11 @@ import {
   StyleProp,
   StyleSheet,
   Text,
-  View,
   ViewStyle,
 } from 'react-native';
 import { Customer } from '../types/customer';
 import { theme } from '../themes';
+import { CustomerStatusBadge } from './CustomerStatusBadge';
 
 type CustomerListItemProps = {
   customer: Customer;
@@ -25,16 +25,7 @@ export function CustomerListItem({
     <Pressable style={[styles.card, style]} onPress={onPress}>
       <Text style={styles.name}>{customer.name}</Text>
       <Text style={styles.email}>{customer.email}</Text>
-      <View
-        style={[
-          styles.badge,
-          customer.status === 'active'
-            ? styles.activeBadge
-            : styles.inactiveBadge,
-        ]}
-      >
-        <Text style={styles.badgeText}>{customer.status.toUpperCase()}</Text>
-      </View>
+      <CustomerStatusBadge status={customer.status} style={styles.badge} />
     </Pressable>
   );
 }
@@ -59,19 +50,5 @@ const styles = StyleSheet.create({
   },
   badge: {
     marginTop: 10,
-    alignSelf: 'flex-start',
-    borderRadius: theme.radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: theme.spacing.xs,
-  },
-  activeBadge: {
-    backgroundColor: theme.customer.status.activeBackground,
-  },
-  inactiveBadge: {
-    backgroundColor: theme.customer.status.inactiveBackground,
-  },
-  badgeText: {
-    ...theme.typography.badge,
-    color: theme.customer.status.text,
   },
 });

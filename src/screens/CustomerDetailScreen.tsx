@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCustomers } from '../context/CustomersContext';
 import { RootStackParamList } from '../navigation/types';
+import { theme } from '../themes';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CustomerDetail'>;
 
@@ -59,47 +60,37 @@ export function CustomerDetailScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-    padding: 16,
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.lg,
   },
   name: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 8,
+    ...theme.typography.screenTitle,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.sm,
   },
   meta: {
-    fontSize: 15,
-    color: '#334155',
+    ...theme.typography.body,
+    color: theme.colors.textSecondary,
     marginBottom: 6,
   },
   button: {
-    marginTop: 16,
-    borderRadius: 10,
+    marginTop: theme.spacing.lg,
+    borderRadius: theme.radius.sm,
     paddingVertical: 12,
     alignItems: 'center',
   },
   primaryButton: {
-    backgroundColor: '#1D4ED8',
+    backgroundColor: theme.colors.primary,
   },
   secondaryButton: {
-    backgroundColor: '#0F766E',
+    backgroundColor: theme.colors.secondary,
   },
   buttonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
+    ...theme.typography.button,
+    color: theme.colors.textInverse,
   },
   errorText: {
-    color: '#B91C1C',
-    fontSize: 16,
-  },
-  linkButton: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  linkText: {
-    color: '#475569',
-    fontSize: 13,
+    color: theme.colors.danger,
+    ...theme.typography.label,
   },
 });

@@ -14,10 +14,15 @@ import { CustomerListItem } from '../components/CustomerListItem';
 import { useCustomers } from '../context/CustomersContext';
 import { Customer } from '../types/customer';
 import { RootStackParamList } from '../navigation/types';
+import { theme } from '../themes';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CustomerList'>;
 
 const MIN_REFRESH_MS = 800;
+
+function ListSeparator() {
+  return <View style={styles.separator} />;
+}
 
 function wait(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -92,7 +97,7 @@ export function CustomerListScreen({ navigation }: Props) {
 
       {isLoading ? (
         <View style={styles.centeredState}>
-          <ActivityIndicator size="small" color="#1D4ED8" />
+          <ActivityIndicator size="small" color={theme.colors.primary} />
           <Text style={styles.stateText}>Loading customers...</Text>
         </View>
       ) : error ? (
@@ -105,7 +110,7 @@ export function CustomerListScreen({ navigation }: Props) {
           keyExtractor={item => item.id}
           renderItem={renderCustomer}
           contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ItemSeparatorComponent={ListSeparator}
           refreshControl={
             <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
           }
@@ -123,28 +128,27 @@ export function CustomerListScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 16,
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: theme.spacing.lg,
     paddingTop: 14,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 12,
+    ...theme.typography.screenTitle,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.md,
   },
   searchInput: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    backgroundColor: theme.colors.surface,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.borderDefault,
+    borderRadius: theme.radius.sm,
+    paddingHorizontal: theme.spacing.md,
     paddingVertical: 10,
-    fontSize: 16,
+    ...theme.typography.label,
     marginBottom: 14,
   },
   listContent: {
-    paddingBottom: 24,
+    paddingBottom: theme.spacing.xl,
   },
   separator: {
     height: 10,
@@ -156,12 +160,12 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   stateText: {
-    marginTop: 8,
-    fontSize: 14,
-    color: '#475569',
+    marginTop: theme.spacing.sm,
+    ...theme.typography.bodySmall,
+    color: theme.colors.textMuted,
   },
   errorText: {
-    color: '#B91C1C',
+    color: theme.colors.danger,
     textAlign: 'center',
   },
 });

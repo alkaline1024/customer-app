@@ -8,6 +8,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Customer } from '../types/customer';
+import { theme } from '../themes';
 
 type CustomerListItemProps = {
   customer: Customer;
@@ -40,40 +41,37 @@ export function CustomerListItem({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderWidth: theme.border.hairline,
+    borderColor: theme.customer.cardBorderColor,
   },
   name: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
+    ...theme.typography.label,
+    color: theme.colors.textPrimary,
   },
   email: {
-    marginTop: 4,
-    fontSize: 14,
-    color: '#475569',
+    marginTop: theme.spacing.xs,
+    ...theme.typography.bodySmall,
+    color: theme.colors.textMuted,
   },
   badge: {
     marginTop: 10,
     alignSelf: 'flex-start',
-    borderRadius: 999,
+    borderRadius: theme.radius.pill,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: theme.spacing.xs,
   },
   activeBadge: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: theme.customer.status.activeBackground,
   },
   inactiveBadge: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: theme.customer.status.inactiveBackground,
   },
   badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-    color: '#0F172A',
+    ...theme.typography.badge,
+    color: theme.customer.status.text,
   },
 });

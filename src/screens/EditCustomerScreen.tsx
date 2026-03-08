@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
+import { theme } from '../themes';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditCustomer'>;
 
@@ -21,18 +22,17 @@ export function EditCustomerScreen({ route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-    padding: 16,
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.lg,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#0F172A',
+    ...theme.typography.sectionTitle,
+    color: theme.colors.textPrimary,
     marginBottom: 10,
   },
   text: {
-    fontSize: 15,
-    color: '#334155',
+    ...theme.typography.body,
+    color: theme.colors.textSecondary,
     marginBottom: 8,
   },
 });

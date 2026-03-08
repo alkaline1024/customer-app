@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { CustomerDetailScreen } from '../screens/CustomerDetailScreen';
 import { CustomerListScreen } from '../screens/CustomerListScreen';
 import { EditCustomerScreen } from '../screens/EditCustomerScreen';
+import { theme } from '../themes';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -11,7 +12,20 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: theme.colors.surface,
+          },
+          headerTitleStyle: {
+            color: theme.colors.textPrimary,
+          },
+          headerTintColor: theme.colors.primary,
+          contentStyle: {
+            backgroundColor: theme.colors.background,
+          },
+        }}
+      >
         <Stack.Screen
           name="CustomerList"
           component={CustomerListScreen}

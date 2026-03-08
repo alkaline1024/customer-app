@@ -53,7 +53,7 @@ export function CustomerDetailScreen({ navigation, route }: Props) {
           isStatusUpdating && styles.buttonDisabled,
         ]}
         onPress={() => {
-          void toggleCustomerStatus(customer.id);
+          toggleCustomerStatus(customer.id);
         }}
         disabled={isStatusUpdating}
       >

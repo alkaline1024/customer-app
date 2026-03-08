@@ -1,6 +1,6 @@
 # Customer App (React Native)
 
-[TH](#-thai) | [EN](#-english)
+[TH](#thai) | [EN](#english)
 
 ---
 

@@ -45,14 +45,15 @@ export function CustomerListScreen({ navigation }: Props) {
     loadMoreCustomers,
     searchCustomers,
   } = useCustomers();
+
   const [query, setQuery] = useState('');
 
+  // Initial load
   useEffect(() => {
-    if (customers.length === 0) {
-      loadCustomers();
-    }
-  }, [customers.length, loadCustomers]);
+    loadCustomers();
+  }, [loadCustomers]);
 
+  // Load on search query change + debounce
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       searchCustomers(query);
